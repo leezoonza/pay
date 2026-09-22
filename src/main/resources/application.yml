@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: pay
+
+  jpa:
+    open-in-view: false
