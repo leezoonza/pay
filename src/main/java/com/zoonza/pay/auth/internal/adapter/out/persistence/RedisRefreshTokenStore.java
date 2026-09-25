@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,6 +30,12 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
                 refreshToken.customerId().toString(),
                 timeToLive
         );
+    }
+
+    @Override
+    public Optional<Long> findCustomerIdAndDelete(String refreshTokenValue) {
+        return Optional.ofNullable(redisTemplate.opsForValue().getAndDelete(keyOf(refreshTokenValue)))
+                .map(Long::valueOf);
     }
 
     @Override

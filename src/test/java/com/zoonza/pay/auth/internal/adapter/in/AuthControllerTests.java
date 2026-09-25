@@ -5,8 +5,8 @@ import com.zoonza.pay.auth.internal.adapter.in.support.RefreshTokenCookiePropert
 import com.zoonza.pay.auth.internal.adapter.in.support.TokenCookieManager;
 import com.zoonza.pay.auth.internal.application.dto.AccessToken;
 import com.zoonza.pay.auth.internal.application.dto.LoginCommand;
-import com.zoonza.pay.auth.internal.application.dto.LoginResult;
 import com.zoonza.pay.auth.internal.application.dto.RefreshToken;
+import com.zoonza.pay.auth.internal.application.dto.TokenResult;
 import com.zoonza.pay.auth.internal.application.port.in.AuthCommandUseCase;
 import com.zoonza.pay.auth.internal.domain.AuthErrorCode;
 import com.zoonza.pay.shared.domain.PhoneNumber;
@@ -46,6 +46,7 @@ import static org.mockito.Mockito.verify;
 @Import(TokenCookieManager.class)
 class AuthControllerTests {
     private static final String LOGIN_URL = "/api/auth/login";
+    private static final String REISSUE_URL = "/api/auth/reissue";
     private static final String LOGOUT_URL = "/api/auth/logout";
 
     @Autowired
@@ -60,7 +61,7 @@ class AuthControllerTests {
     @Test
     @DisplayName("로그인하면 200과 액세스 토큰을 반환하고 리프레시 토큰을 HttpOnly 쿠키로 내려준다")
     void logsIn() {
-        given(authCommandUseCase.login(any())).willReturn(new LoginResult(
+        given(authCommandUseCase.login(any())).willReturn(new TokenResult(
                 new AccessToken("access-token"),
                 new RefreshToken("refresh-token", 1L, Instant.now().plus(Duration.ofDays(14)))
         ));
@@ -106,6 +107,41 @@ class AuthControllerTests {
 
         assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
         assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("AUTH-001");
+        assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰 쿠키로 재발급하면 200과 새 액세스 토큰을 반환하고 새 리프레시 토큰 쿠키를 내려준다")
+    void reissuesTokens() {
+        given(authCommandUseCase.reissue("old-refresh-token")).willReturn(new TokenResult(
+                new AccessToken("new-access-token"),
+                new RefreshToken("new-refresh-token", 1L, Instant.now().plus(Duration.ofDays(14)))
+        ));
+
+        MvcTestResult result = mockMvc.post()
+                .uri(REISSUE_URL)
+                .cookie(new Cookie("refresh_token", "old-refresh-token"))
+                .exchange();
+
+        assertThat(result).hasStatus(HttpStatus.OK);
+        assertThat(result).bodyJson().extractingPath("$.accessToken").isEqualTo("new-access-token");
+        assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE))
+                .startsWith("refresh_token=new-refresh-token;")
+                .contains("Path=/api/auth", "HttpOnly", "SameSite=Strict");
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰이 유효하지 않으면 401과 오류 코드를 반환한다")
+    void rejectsInvalidRefreshToken() {
+        given(authCommandUseCase.reissue(isNull()))
+                .willThrow(new BusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+
+        MvcTestResult result = mockMvc.post()
+                .uri(REISSUE_URL)
+                .exchange();
+
+        assertThat(result).hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("AUTH-002");
         assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE)).isNull();
     }
 

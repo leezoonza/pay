@@ -2,8 +2,8 @@ package com.zoonza.pay.auth.internal.application.service;
 
 import com.zoonza.pay.auth.internal.application.dto.AccessToken;
 import com.zoonza.pay.auth.internal.application.dto.LoginCommand;
-import com.zoonza.pay.auth.internal.application.dto.LoginResult;
 import com.zoonza.pay.auth.internal.application.dto.RefreshToken;
+import com.zoonza.pay.auth.internal.application.dto.TokenResult;
 import com.zoonza.pay.auth.internal.application.port.in.AuthCommandUseCase;
 import com.zoonza.pay.auth.internal.application.port.out.AccessTokenIssuer;
 import com.zoonza.pay.auth.internal.application.port.out.RefreshTokenIssuer;
@@ -28,18 +28,25 @@ public class AuthCommandService implements AuthCommandUseCase {
     private final RefreshTokenStore refreshTokenStore;
 
     @Override
-    public LoginResult login(LoginCommand command) {
+    public TokenResult login(LoginCommand command) {
         Long customerId = customerApi.findIdByPhoneNumber(command.phoneNumber())
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.CUSTOMER_NOT_FOUND));
 
         verificationApi.consume(command.verificationId(), command.phoneNumber(), VerificationPurpose.LOGIN);
 
-        Instant now = Instant.now();
-        AccessToken accessToken = accessTokenIssuer.issue(customerId, now);
-        RefreshToken refreshToken = refreshTokenIssuer.issue(customerId, now);
-        refreshTokenStore.save(refreshToken);
+        return issueTokens(customerId);
+    }
 
-        return new LoginResult(accessToken, refreshToken);
+    @Override
+    public TokenResult reissue(String refreshTokenValue) {
+        if (refreshTokenValue == null) {
+            throw new BusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        Long customerId = refreshTokenStore.findCustomerIdAndDelete(refreshTokenValue)
+                .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+
+        return issueTokens(customerId);
     }
 
     @Override
@@ -49,5 +56,14 @@ public class AuthCommandService implements AuthCommandUseCase {
         }
 
         refreshTokenStore.delete(refreshTokenValue);
+    }
+
+    private TokenResult issueTokens(Long customerId) {
+        Instant now = Instant.now();
+        AccessToken accessToken = accessTokenIssuer.issue(customerId, now);
+        RefreshToken refreshToken = refreshTokenIssuer.issue(customerId, now);
+        refreshTokenStore.save(refreshToken);
+
+        return new TokenResult(accessToken, refreshToken);
     }
 }

@@ -3,10 +3,7 @@ package com.zoonza.pay.auth.internal.fixture;
 import com.zoonza.pay.auth.internal.application.dto.RefreshToken;
 import com.zoonza.pay.auth.internal.application.port.out.RefreshTokenStore;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class InMemoryRefreshTokenStore implements RefreshTokenStore {
     private final Map<String, RefreshToken> refreshTokens = new LinkedHashMap<>();
@@ -14,6 +11,12 @@ public class InMemoryRefreshTokenStore implements RefreshTokenStore {
     @Override
     public void save(RefreshToken refreshToken) {
         refreshTokens.put(refreshToken.value(), refreshToken);
+    }
+
+    @Override
+    public Optional<Long> findCustomerIdAndDelete(String refreshTokenValue) {
+        return Optional.ofNullable(refreshTokens.remove(Objects.requireNonNull(refreshTokenValue)))
+                .map(RefreshToken::customerId);
     }
 
     @Override

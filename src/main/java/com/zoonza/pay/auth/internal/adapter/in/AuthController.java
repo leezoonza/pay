@@ -1,9 +1,9 @@
 package com.zoonza.pay.auth.internal.adapter.in;
 
 import com.zoonza.pay.auth.internal.adapter.in.dto.LoginRequest;
-import com.zoonza.pay.auth.internal.adapter.in.dto.LoginResponse;
+import com.zoonza.pay.auth.internal.adapter.in.dto.TokenResponse;
 import com.zoonza.pay.auth.internal.adapter.in.support.TokenCookieManager;
-import com.zoonza.pay.auth.internal.application.dto.LoginResult;
+import com.zoonza.pay.auth.internal.application.dto.TokenResult;
 import com.zoonza.pay.auth.internal.application.port.in.AuthCommandUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +20,27 @@ public class AuthController {
     private final AuthCommandUseCase authCommandUseCase;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
+    public ResponseEntity<TokenResponse> login(
             @Valid @RequestBody LoginRequest request
     ) {
-        LoginResult result = authCommandUseCase.login(request.toCommand());
+        TokenResult result = authCommandUseCase.login(request.toCommand());
         ResponseCookie cookie = tokenCookieManager.createRefreshTokenCookie(result.refreshToken());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new LoginResponse(result.accessToken().value()));
+                .body(new TokenResponse(result.accessToken().value()));
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenResponse> reissue(
+            @CookieValue(name = TokenCookieManager.REFRESH_TOKEN_COOKIE, required = false) String refreshToken
+    ) {
+        TokenResult result = authCommandUseCase.reissue(refreshToken);
+        ResponseCookie cookie = tokenCookieManager.createRefreshTokenCookie(result.refreshToken());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(new TokenResponse(result.accessToken().value()));
     }
 
     @PostMapping("/logout")

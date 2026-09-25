@@ -3,7 +3,8 @@ package com.zoonza.pay.auth.internal.domain;
 import com.zoonza.pay.shared.error.ErrorCode;
 
 public enum AuthErrorCode implements ErrorCode {
-    CUSTOMER_NOT_FOUND("AUTH-001", "핸드폰 번호를 확인해 주세요.", 404);
+    CUSTOMER_NOT_FOUND("AUTH-001", "핸드폰 번호를 확인해 주세요.", 404),
+    INVALID_REFRESH_TOKEN("AUTH-002", "로그인이 만료되었습니다. 다시 로그인해 주세요.", 401);
 
     private final String code;
     private final String message;

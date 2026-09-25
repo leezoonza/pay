@@ -1,7 +1,7 @@
 package com.zoonza.pay.auth.internal.application;
 
 import com.zoonza.pay.auth.internal.application.dto.LoginCommand;
-import com.zoonza.pay.auth.internal.application.dto.LoginResult;
+import com.zoonza.pay.auth.internal.application.dto.TokenResult;
 import com.zoonza.pay.auth.internal.application.port.in.AuthCommandUseCase;
 import com.zoonza.pay.auth.internal.application.service.AuthCommandService;
 import com.zoonza.pay.auth.internal.domain.AuthErrorCode;
@@ -29,7 +29,7 @@ class AuthCommandUseCaseTests {
             customerApi,
             verificationApi,
             new FixedAccessTokenIssuer(),
-            new FixedRefreshTokenIssuer(),
+            new SequentialRefreshTokenIssuer(),
             refreshTokenStore
     );
 
@@ -38,13 +38,13 @@ class AuthCommandUseCaseTests {
     void logsIn() {
         customerApi.register(PHONE_NUMBER, CUSTOMER_ID);
 
-        LoginResult result = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
+        TokenResult result = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
 
         assertThat(verificationApi.consumedVerifications()).containsExactly(
                 new ConsumedVerification(VERIFICATION_ID, PHONE_NUMBER, VerificationPurpose.LOGIN)
         );
         assertThat(result.accessToken().value()).isEqualTo("access-token-1");
-        assertThat(result.refreshToken().value()).isEqualTo("refresh-token-1");
+        assertThat(result.refreshToken().value()).isEqualTo("refresh-token-1-1");
         assertThat(refreshTokenStore.savedRefreshTokens()).containsExactly(result.refreshToken());
     }
 
@@ -71,10 +71,48 @@ class AuthCommandUseCaseTests {
     }
 
     @Test
+    @DisplayName("리프레시 토큰으로 재발급하면 기존 토큰을 폐기하고 새 토큰을 발급한다")
+    void reissuesTokens() {
+        customerApi.register(PHONE_NUMBER, CUSTOMER_ID);
+        TokenResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
+
+        TokenResult reissued = useCase.reissue(loggedIn.refreshToken().value());
+
+        assertThat(reissued.accessToken().value()).isEqualTo("access-token-1");
+        assertThat(reissued.refreshToken().customerId()).isEqualTo(CUSTOMER_ID);
+        assertThat(reissued.refreshToken().value()).isNotEqualTo(loggedIn.refreshToken().value());
+        assertThat(refreshTokenStore.savedRefreshTokens()).containsExactly(reissued.refreshToken());
+    }
+
+    @Test
+    @DisplayName("이미 사용한 리프레시 토큰으로는 재발급할 수 없다")
+    void rejectsReusedRefreshToken() {
+        customerApi.register(PHONE_NUMBER, CUSTOMER_ID);
+        TokenResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
+        useCase.reissue(loggedIn.refreshToken().value());
+
+        assertInvalidRefreshToken(loggedIn.refreshToken().value());
+    }
+
+    @Test
+    @DisplayName("저장되지 않은 리프레시 토큰으로는 재발급할 수 없다")
+    void rejectsUnknownRefreshToken() {
+        assertInvalidRefreshToken("unknown");
+        assertThat(refreshTokenStore.savedRefreshTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰 없이는 재발급할 수 없다")
+    void rejectsMissingRefreshToken() {
+        assertInvalidRefreshToken(null);
+        assertThat(refreshTokenStore.savedRefreshTokens()).isEmpty();
+    }
+
+    @Test
     @DisplayName("로그아웃하면 리프레시 토큰을 삭제한다")
     void logsOut() {
         customerApi.register(PHONE_NUMBER, CUSTOMER_ID);
-        LoginResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
+        TokenResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
 
         useCase.logout(loggedIn.refreshToken().value());
 
@@ -85,11 +123,17 @@ class AuthCommandUseCaseTests {
     @DisplayName("리프레시 토큰 없이 로그아웃하면 아무것도 삭제하지 않는다")
     void logsOutWithoutRefreshToken() {
         customerApi.register(PHONE_NUMBER, CUSTOMER_ID);
-        LoginResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
+        TokenResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
 
         useCase.logout(null);
 
         assertThat(refreshTokenStore.savedRefreshTokens()).containsExactly(loggedIn.refreshToken());
+    }
+
+    private void assertInvalidRefreshToken(String refreshTokenValue) {
+        assertThatThrownBy(() -> useCase.reissue(refreshTokenValue))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_REFRESH_TOKEN));
     }
 
     private record TestErrorCode() implements ErrorCode {

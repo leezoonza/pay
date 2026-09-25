@@ -6,11 +6,14 @@ import com.zoonza.pay.auth.internal.application.port.out.RefreshTokenIssuer;
 import java.time.Duration;
 import java.time.Instant;
 
-public class FixedRefreshTokenIssuer implements RefreshTokenIssuer {
+public class SequentialRefreshTokenIssuer implements RefreshTokenIssuer {
     public static final Duration TIME_TO_LIVE = Duration.ofDays(14);
+
+    private int sequence;
 
     @Override
     public RefreshToken issue(Long customerId, Instant now) {
-        return new RefreshToken("refresh-token-" + customerId, customerId, now.plus(TIME_TO_LIVE));
+        sequence++;
+        return new RefreshToken("refresh-token-" + customerId + "-" + sequence, customerId, now.plus(TIME_TO_LIVE));
     }
 }
