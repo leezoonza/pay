@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Set;
@@ -20,6 +21,7 @@ class SignupRequestTests {
 
     private static final String VALID_NAME = "김철수";
     private static final String VALID_PHONE_NUMBER = "010-1234-5678";
+    private static final String VALID_VERIFICATION_ID = "verification-id";
 
     private static ValidatorFactory validatorFactory;
     private static Validator validator;
@@ -86,8 +88,21 @@ class SignupRequestTests {
                 .containsExactly("전화번호는 010-XXXX-XXXX 형식이어야 합니다.");
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" "})
+    @DisplayName("인증 ID가 없으면 검증에 실패한다")
+    void rejectsMissingVerificationId(String verificationId) {
+        assertThat(messagesOf(validate(VALID_NAME, VALID_PHONE_NUMBER, verificationId)))
+                .containsExactly("인증 ID는 필수입니다.");
+    }
+
     private Set<ConstraintViolation<SignupRequest>> validate(String name, String phoneNumber) {
-        return validator.validate(new SignupRequest(name, phoneNumber));
+        return validate(name, phoneNumber, VALID_VERIFICATION_ID);
+    }
+
+    private Set<ConstraintViolation<SignupRequest>> validate(String name, String phoneNumber, String verificationId) {
+        return validator.validate(new SignupRequest(name, phoneNumber, verificationId));
     }
 
     private static Set<String> messagesOf(Set<ConstraintViolation<SignupRequest>> violations) {

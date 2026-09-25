@@ -5,6 +5,7 @@ import com.zoonza.pay.shared.domain.PhoneNumber;
 
 public record RegisterCustomerCommand(
         Name name,
-        PhoneNumber phoneNumber
+        PhoneNumber phoneNumber,
+        String verificationId
 ) {
 }
