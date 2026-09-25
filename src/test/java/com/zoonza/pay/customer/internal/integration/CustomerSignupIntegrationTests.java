@@ -5,7 +5,7 @@ import com.zoonza.pay.customer.internal.adapter.in.dto.SignupRequest;
 import com.zoonza.pay.customer.internal.adapter.out.persistence.CustomerJpaRepository;
 import com.zoonza.pay.customer.internal.domain.Customer;
 import com.zoonza.pay.customer.internal.domain.Name;
-import com.zoonza.pay.customer.internal.domain.PhoneNumber;
+import com.zoonza.pay.shared.domain.PhoneNumber;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

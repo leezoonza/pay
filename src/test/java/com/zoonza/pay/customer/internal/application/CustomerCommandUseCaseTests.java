@@ -6,8 +6,8 @@ import com.zoonza.pay.customer.internal.application.service.CustomerCommandServi
 import com.zoonza.pay.customer.internal.domain.Customer;
 import com.zoonza.pay.customer.internal.domain.CustomerErrorCode;
 import com.zoonza.pay.customer.internal.domain.Name;
-import com.zoonza.pay.customer.internal.domain.PhoneNumber;
 import com.zoonza.pay.customer.internal.fixture.InMemoryCustomerRepository;
+import com.zoonza.pay.shared.domain.PhoneNumber;
 import com.zoonza.pay.shared.error.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

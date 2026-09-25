@@ -1,5 +1,5 @@
 @ApplicationModule(
-        allowedDependencies = {"shared::error"}
+        allowedDependencies = {"shared::error", "shared::domain"}
 )
 package com.zoonza.pay.customer;
 

@@ -2,7 +2,7 @@ package com.zoonza.pay.customer.internal.adapter.in.dto;
 
 import com.zoonza.pay.customer.internal.application.dto.RegisterCustomerCommand;
 import com.zoonza.pay.customer.internal.domain.Name;
-import com.zoonza.pay.customer.internal.domain.PhoneNumber;
+import com.zoonza.pay.shared.domain.PhoneNumber;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 

@@ -1,5 +1,6 @@
 package com.zoonza.pay.customer.internal.domain;
 
+import com.zoonza.pay.shared.domain.PhoneNumber;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,6 +20,10 @@ public class Customer {
     private Name name;
 
     @Embedded
+    @AttributeOverride(
+            name = "value",
+            column = @Column(name = "phone_number", unique = true, nullable = false)
+    )
     private PhoneNumber phoneNumber;
 
     @Column(nullable = false,  updatable = false)

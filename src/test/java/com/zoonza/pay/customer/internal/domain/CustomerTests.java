@@ -1,5 +1,6 @@
 package com.zoonza.pay.customer.internal.domain;
 
+import com.zoonza.pay.shared.domain.PhoneNumber;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

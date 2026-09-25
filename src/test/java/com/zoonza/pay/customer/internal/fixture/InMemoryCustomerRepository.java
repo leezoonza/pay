@@ -2,7 +2,7 @@ package com.zoonza.pay.customer.internal.fixture;
 
 import com.zoonza.pay.customer.internal.domain.Customer;
 import com.zoonza.pay.customer.internal.domain.CustomerRepository;
-import com.zoonza.pay.customer.internal.domain.PhoneNumber;
+import com.zoonza.pay.shared.domain.PhoneNumber;
 
 import java.util.ArrayList;
 import java.util.List;

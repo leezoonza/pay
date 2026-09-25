@@ -2,7 +2,7 @@ package com.zoonza.pay.customer.internal.adapter.out.persistence;
 
 import com.zoonza.pay.customer.internal.domain.Customer;
 import com.zoonza.pay.customer.internal.domain.CustomerRepository;
-import com.zoonza.pay.customer.internal.domain.PhoneNumber;
+import com.zoonza.pay.shared.domain.PhoneNumber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
