@@ -41,4 +41,13 @@ public class AuthCommandService implements AuthCommandUseCase {
 
         return new LoginResult(accessToken, refreshToken);
     }
+
+    @Override
+    public void logout(String refreshTokenValue) {
+        if (refreshTokenValue == null) {
+            return;
+        }
+
+        refreshTokenStore.delete(refreshTokenValue);
+    }
 }

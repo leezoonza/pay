@@ -10,10 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,10 +24,22 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request
     ) {
         LoginResult result = authCommandUseCase.login(request.toCommand());
-        ResponseCookie cookie = tokenCookieManager.refreshTokenCookie(result.refreshToken());
+        ResponseCookie cookie = tokenCookieManager.createRefreshTokenCookie(result.refreshToken());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new LoginResponse(result.accessToken().value()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = TokenCookieManager.REFRESH_TOKEN_COOKIE, required = false) String refreshToken
+    ) {
+        authCommandUseCase.logout(refreshToken);
+        ResponseCookie cookie = tokenCookieManager.expiredRefreshTokenCookie();
+
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .build();
     }
 }

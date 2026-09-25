@@ -70,6 +70,28 @@ class AuthCommandUseCaseTests {
         assertThat(refreshTokenStore.savedRefreshTokens()).isEmpty();
     }
 
+    @Test
+    @DisplayName("로그아웃하면 리프레시 토큰을 삭제한다")
+    void logsOut() {
+        customerApi.register(PHONE_NUMBER, CUSTOMER_ID);
+        LoginResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
+
+        useCase.logout(loggedIn.refreshToken().value());
+
+        assertThat(refreshTokenStore.savedRefreshTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰 없이 로그아웃하면 아무것도 삭제하지 않는다")
+    void logsOutWithoutRefreshToken() {
+        customerApi.register(PHONE_NUMBER, CUSTOMER_ID);
+        LoginResult loggedIn = useCase.login(new LoginCommand(PHONE_NUMBER, VERIFICATION_ID));
+
+        useCase.logout(null);
+
+        assertThat(refreshTokenStore.savedRefreshTokens()).containsExactly(loggedIn.refreshToken());
+    }
+
     private record TestErrorCode() implements ErrorCode {
         @Override
         public String getCode() {

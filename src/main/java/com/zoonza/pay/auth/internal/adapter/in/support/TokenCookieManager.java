@@ -11,18 +11,26 @@ import java.time.Instant;
 @Component
 @RequiredArgsConstructor
 public class TokenCookieManager {
-    static final String REFRESH_TOKEN_COOKIE = "refresh_token";
+    public static final String REFRESH_TOKEN_COOKIE = "refresh_token";
     private static final String PATH = "/api/auth";
 
     private final RefreshTokenCookieProperties properties;
 
-    public ResponseCookie refreshTokenCookie(RefreshToken refreshToken) {
-        return ResponseCookie.from(REFRESH_TOKEN_COOKIE, refreshToken.value())
+    public ResponseCookie createRefreshTokenCookie(RefreshToken refreshToken) {
+        return createRefreshTokenCookie(refreshToken.value(), Duration.between(Instant.now(), refreshToken.expiresAt()));
+    }
+
+    public ResponseCookie expiredRefreshTokenCookie() {
+        return createRefreshTokenCookie("", Duration.ZERO);
+    }
+
+    private ResponseCookie createRefreshTokenCookie(String value, Duration maxAge) {
+        return ResponseCookie.from(REFRESH_TOKEN_COOKIE, value)
                 .httpOnly(true)
                 .secure(properties.secure())
                 .sameSite("Strict")
                 .path(PATH)
-                .maxAge(Duration.between(Instant.now(), refreshToken.expiresAt()))
+                .maxAge(maxAge)
                 .build();
     }
 }

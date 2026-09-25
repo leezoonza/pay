@@ -31,6 +31,11 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
         );
     }
 
+    @Override
+    public void delete(String refreshTokenValue) {
+        redisTemplate.delete(keyOf(refreshTokenValue));
+    }
+
     private String keyOf(String tokenValue) {
         return KEY_PREFIX + sha256(tokenValue);
     }

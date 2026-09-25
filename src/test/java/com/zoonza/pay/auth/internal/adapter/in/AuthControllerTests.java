@@ -11,6 +11,7 @@ import com.zoonza.pay.auth.internal.application.port.in.AuthCommandUseCase;
 import com.zoonza.pay.auth.internal.domain.AuthErrorCode;
 import com.zoonza.pay.shared.domain.PhoneNumber;
 import com.zoonza.pay.shared.error.BusinessException;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -44,6 +46,7 @@ import static org.mockito.Mockito.verify;
 @Import(TokenCookieManager.class)
 class AuthControllerTests {
     private static final String LOGIN_URL = "/api/auth/login";
+    private static final String LOGOUT_URL = "/api/auth/logout";
 
     @Autowired
     private MockMvcTester mockMvc;
@@ -104,6 +107,33 @@ class AuthControllerTests {
         assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
         assertThat(result).bodyJson().extractingPath("$.code").isEqualTo("AUTH-001");
         assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰 쿠키로 로그아웃하면 204를 반환하고 토큰을 삭제한 뒤 쿠키를 만료시킨다")
+    void logsOut() {
+        MvcTestResult result = mockMvc.post()
+                .uri(LOGOUT_URL)
+                .cookie(new Cookie("refresh_token", "refresh-token"))
+                .exchange();
+
+        assertThat(result).hasStatus(HttpStatus.NO_CONTENT);
+        assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE))
+                .startsWith("refresh_token=;")
+                .contains("Path=/api/auth", "Max-Age=0", "HttpOnly");
+        verify(authCommandUseCase).logout("refresh-token");
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰 쿠키 없이 로그아웃하면 토큰 없이 유즈케이스를 호출하고 204와 만료된 쿠키를 반환한다")
+    void logsOutWithoutCookie() {
+        MvcTestResult result = mockMvc.post()
+                .uri(LOGOUT_URL)
+                .exchange();
+
+        assertThat(result).hasStatus(HttpStatus.NO_CONTENT);
+        assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE)).contains("Max-Age=0");
+        verify(authCommandUseCase).logout(isNull());
     }
 
     private MvcTestResult login(LoginRequest request) {
