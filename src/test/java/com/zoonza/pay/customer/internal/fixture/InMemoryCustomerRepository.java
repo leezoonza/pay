@@ -6,6 +6,7 @@ import com.zoonza.pay.shared.domain.PhoneNumber;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class InMemoryCustomerRepository implements CustomerRepository {
     private final List<Customer> customers = new ArrayList<>();
@@ -19,6 +20,13 @@ public class InMemoryCustomerRepository implements CustomerRepository {
     public Customer save(Customer customer) {
         customers.add(customer);
         return customer;
+    }
+
+    @Override
+    public Optional<Customer> findByPhoneNumber(PhoneNumber phoneNumber) {
+        return customers.stream()
+                .filter(customer -> customer.getPhoneNumber().equals(phoneNumber))
+                .findFirst();
     }
 
     public List<Customer> savedCustomers() {

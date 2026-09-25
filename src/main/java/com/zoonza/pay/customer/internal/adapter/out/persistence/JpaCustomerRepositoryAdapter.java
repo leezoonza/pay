@@ -6,6 +6,8 @@ import com.zoonza.pay.shared.domain.PhoneNumber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class JpaCustomerRepositoryAdapter implements CustomerRepository {
@@ -19,5 +21,10 @@ public class JpaCustomerRepositoryAdapter implements CustomerRepository {
     @Override
     public Customer save(Customer customer) {
         return jpaRepository.save(customer);
+    }
+
+    @Override
+    public Optional<Customer> findByPhoneNumber(PhoneNumber phoneNumber) {
+        return jpaRepository.findByPhoneNumber(phoneNumber);
     }
 }
