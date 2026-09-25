@@ -1,4 +1,4 @@
-package com.zoonza.pay.customer.domain;
+package com.zoonza.pay.customer.internal.domain;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

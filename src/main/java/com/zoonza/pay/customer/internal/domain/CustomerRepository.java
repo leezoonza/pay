@@ -1,4 +1,4 @@
-package com.zoonza.pay.customer.domain;
+package com.zoonza.pay.customer.internal.domain;
 
 public interface CustomerRepository {
     boolean existsByPhoneNumber(PhoneNumber phoneNumber);

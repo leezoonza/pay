@@ -1,13 +1,13 @@
-package com.zoonza.pay.customer.application;
+package com.zoonza.pay.customer.internal.application;
 
-import com.zoonza.pay.customer.application.dto.RegisterCustomerCommand;
-import com.zoonza.pay.customer.application.port.in.CustomerCommandUseCase;
-import com.zoonza.pay.customer.application.service.CustomerCommandService;
-import com.zoonza.pay.customer.domain.Customer;
-import com.zoonza.pay.customer.domain.CustomerErrorCode;
-import com.zoonza.pay.customer.domain.Name;
-import com.zoonza.pay.customer.domain.PhoneNumber;
-import com.zoonza.pay.customer.fixture.InMemoryCustomerRepository;
+import com.zoonza.pay.customer.internal.application.dto.RegisterCustomerCommand;
+import com.zoonza.pay.customer.internal.application.port.in.CustomerCommandUseCase;
+import com.zoonza.pay.customer.internal.application.service.CustomerCommandService;
+import com.zoonza.pay.customer.internal.domain.Customer;
+import com.zoonza.pay.customer.internal.domain.CustomerErrorCode;
+import com.zoonza.pay.customer.internal.domain.Name;
+import com.zoonza.pay.customer.internal.domain.PhoneNumber;
+import com.zoonza.pay.customer.internal.fixture.InMemoryCustomerRepository;
 import com.zoonza.pay.shared.error.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

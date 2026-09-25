@@ -1,4 +1,4 @@
-package com.zoonza.pay.customer.domain;
+package com.zoonza.pay.customer.internal.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

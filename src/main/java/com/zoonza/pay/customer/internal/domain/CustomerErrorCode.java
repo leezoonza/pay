@@ -1,4 +1,4 @@
-package com.zoonza.pay.customer.domain;
+package com.zoonza.pay.customer.internal.domain;
 
 import com.zoonza.pay.shared.error.ErrorCode;
 
