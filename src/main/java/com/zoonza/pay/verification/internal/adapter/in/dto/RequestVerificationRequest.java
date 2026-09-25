@@ -1,8 +1,8 @@
 package com.zoonza.pay.verification.internal.adapter.in.dto;
 
 import com.zoonza.pay.shared.domain.PhoneNumber;
+import com.zoonza.pay.verification.api.VerificationPurpose;
 import com.zoonza.pay.verification.internal.application.dto.RequestVerificationCommand;
-import com.zoonza.pay.verification.internal.domain.VerificationPurpose;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 

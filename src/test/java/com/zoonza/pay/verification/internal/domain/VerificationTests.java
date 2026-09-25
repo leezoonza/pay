@@ -2,6 +2,7 @@ package com.zoonza.pay.verification.internal.domain;
 
 import com.zoonza.pay.shared.domain.PhoneNumber;
 import com.zoonza.pay.shared.error.BusinessException;
+import com.zoonza.pay.verification.api.VerificationPurpose;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ class VerificationTests {
     private static final Instant REQUESTED_AT = Instant.parse("2026-09-25T00:00:00Z");
     private static final VerificationCode CODE = new VerificationCode("123456");
     private static final VerificationCode WRONG_CODE = new VerificationCode("654321");
+    private static final PhoneNumber PHONE_NUMBER = new PhoneNumber("010-1234-5678");
 
     @Test
     @DisplayName("인증을 요청하면 요청 상태로 생성되고 5분 뒤 만료된다")
@@ -98,7 +100,84 @@ class VerificationTests {
                         assertThat(exception.getErrorCode()).isEqualTo(VerificationErrorCode.ALREADY_VERIFIED));
     }
 
+    @Test
+    @DisplayName("확인을 마친 인증을 같은 번호와 목적으로 사용하면 사용 완료 상태가 된다")
+    void consumesVerifiedVerification() {
+        Verification verification = verified();
+
+        verification.consume(PHONE_NUMBER, VerificationPurpose.SIGNUP, REQUESTED_AT.plusSeconds(120));
+
+        assertThat(verification.getStatus()).isEqualTo(VerificationStatus.CONSUMED);
+    }
+
+    @Test
+    @DisplayName("인증번호 확인을 마치지 않은 인증은 사용할 수 없다")
+    void rejectsConsumingUnconfirmedVerification() {
+        Verification verification = requested();
+
+        assertConsumeFails(verification, PHONE_NUMBER, VerificationPurpose.SIGNUP,
+                REQUESTED_AT.plusSeconds(60), VerificationErrorCode.NOT_VERIFIED);
+    }
+
+    @Test
+    @DisplayName("이미 사용한 인증은 다시 사용할 수 없다")
+    void rejectsConsumingTwice() {
+        Verification verification = verified();
+        verification.consume(PHONE_NUMBER, VerificationPurpose.SIGNUP, REQUESTED_AT.plusSeconds(120));
+
+        assertConsumeFails(verification, PHONE_NUMBER, VerificationPurpose.SIGNUP,
+                REQUESTED_AT.plusSeconds(180), VerificationErrorCode.ALREADY_CONSUMED);
+    }
+
+    @Test
+    @DisplayName("확인 후 사용 가능 시간이 지나면 사용할 수 없다")
+    void rejectsConsumingExpiredVerification() {
+        Verification verification = verified();
+
+        assertConsumeFails(verification, PHONE_NUMBER, VerificationPurpose.SIGNUP,
+                verification.getExpiresAt(), VerificationErrorCode.VERIFICATION_EXPIRED);
+    }
+
+    @Test
+    @DisplayName("인증받은 전화번호와 다른 번호로는 사용할 수 없다")
+    void rejectsConsumingWithAnotherPhoneNumber() {
+        Verification verification = verified();
+
+        assertConsumeFails(verification, new PhoneNumber("010-9999-9999"), VerificationPurpose.SIGNUP,
+                REQUESTED_AT.plusSeconds(120), VerificationErrorCode.VERIFICATION_MISMATCH);
+    }
+
+    @Test
+    @DisplayName("인증 목적과 다른 목적으로는 사용할 수 없다")
+    void rejectsConsumingForAnotherPurpose() {
+        Verification verification = verified();
+
+        assertConsumeFails(verification, PHONE_NUMBER, VerificationPurpose.LOGIN,
+                REQUESTED_AT.plusSeconds(120), VerificationErrorCode.VERIFICATION_MISMATCH);
+    }
+
+    private void assertConsumeFails(
+            Verification verification,
+            PhoneNumber phoneNumber,
+            VerificationPurpose purpose,
+            Instant now,
+            VerificationErrorCode expected
+    ) {
+        VerificationStatus statusBefore = verification.getStatus();
+
+        assertThatThrownBy(() -> verification.consume(phoneNumber, purpose, now))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(expected));
+        assertThat(verification.getStatus()).isEqualTo(statusBefore);
+    }
+
+    private Verification verified() {
+        Verification verification = requested();
+        verification.confirm(CODE, REQUESTED_AT.plusSeconds(60));
+        return verification;
+    }
+
     private Verification requested() {
-        return Verification.request(new PhoneNumber("010-1234-5678"), VerificationPurpose.SIGNUP, CODE, REQUESTED_AT);
+        return Verification.request(PHONE_NUMBER, VerificationPurpose.SIGNUP, CODE, REQUESTED_AT);
     }
 }

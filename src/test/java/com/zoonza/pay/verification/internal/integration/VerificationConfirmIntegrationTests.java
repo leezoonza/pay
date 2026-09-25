@@ -1,9 +1,9 @@
 package com.zoonza.pay.verification.internal.integration;
 
 import com.zoonza.pay.TestcontainersConfiguration;
+import com.zoonza.pay.verification.api.VerificationPurpose;
 import com.zoonza.pay.verification.internal.adapter.in.dto.ConfirmVerificationRequest;
 import com.zoonza.pay.verification.internal.adapter.in.dto.RequestVerificationRequest;
-import com.zoonza.pay.verification.internal.domain.VerificationPurpose;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

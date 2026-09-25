@@ -2,6 +2,7 @@ package com.zoonza.pay.verification.internal.adapter.in;
 
 import com.zoonza.pay.shared.domain.PhoneNumber;
 import com.zoonza.pay.shared.error.BusinessException;
+import com.zoonza.pay.verification.api.VerificationPurpose;
 import com.zoonza.pay.verification.internal.adapter.in.dto.ConfirmVerificationRequest;
 import com.zoonza.pay.verification.internal.adapter.in.dto.RequestVerificationRequest;
 import com.zoonza.pay.verification.internal.application.dto.ConfirmVerificationCommand;
@@ -9,7 +10,6 @@ import com.zoonza.pay.verification.internal.application.dto.RequestVerificationC
 import com.zoonza.pay.verification.internal.application.port.in.VerificationCommandUseCase;
 import com.zoonza.pay.verification.internal.domain.VerificationCode;
 import com.zoonza.pay.verification.internal.domain.VerificationErrorCode;
-import com.zoonza.pay.verification.internal.domain.VerificationPurpose;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

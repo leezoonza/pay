@@ -1,6 +1,9 @@
 package com.zoonza.pay.verification.internal.application.service;
 
+import com.zoonza.pay.shared.domain.PhoneNumber;
 import com.zoonza.pay.shared.error.BusinessException;
+import com.zoonza.pay.verification.api.VerificationApi;
+import com.zoonza.pay.verification.api.VerificationPurpose;
 import com.zoonza.pay.verification.internal.application.dto.ConfirmVerificationCommand;
 import com.zoonza.pay.verification.internal.application.dto.RequestVerificationCommand;
 import com.zoonza.pay.verification.internal.application.port.in.VerificationCommandUseCase;
@@ -16,7 +19,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
-public class VerificationCommandService implements VerificationCommandUseCase {
+public class VerificationCommandService implements VerificationCommandUseCase, VerificationApi {
     private final VerificationRepository verificationRepository;
     private final SmsSender smsSender;
 
@@ -40,8 +43,7 @@ public class VerificationCommandService implements VerificationCommandUseCase {
 
     @Override
     public void confirm(ConfirmVerificationCommand command) {
-        Verification verification = verificationRepository.findById(command.verificationId())
-                .orElseThrow(() -> new BusinessException(VerificationErrorCode.VERIFICATION_NOT_FOUND));
+        Verification verification = getVerification(command.verificationId());
 
         boolean matched = verification.confirm(command.code(), Instant.now());
         verificationRepository.save(verification);
@@ -49,5 +51,18 @@ public class VerificationCommandService implements VerificationCommandUseCase {
         if (!matched) {
             throw new BusinessException(VerificationErrorCode.CODE_MISMATCH);
         }
+    }
+
+    @Override
+    public void consume(String verificationId, PhoneNumber phoneNumber, VerificationPurpose purpose) {
+        Verification verification = getVerification(verificationId);
+
+        verification.consume(phoneNumber, purpose, Instant.now());
+        verificationRepository.save(verification);
+    }
+
+    private Verification getVerification(String verificationId) {
+        return verificationRepository.findById(verificationId)
+                .orElseThrow(() -> new BusinessException(VerificationErrorCode.VERIFICATION_NOT_FOUND));
     }
 }

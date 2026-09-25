@@ -2,6 +2,7 @@ package com.zoonza.pay.verification.internal.domain;
 
 import com.zoonza.pay.shared.domain.PhoneNumber;
 import com.zoonza.pay.shared.error.BusinessException;
+import com.zoonza.pay.verification.api.VerificationPurpose;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -80,5 +81,25 @@ public class Verification {
         expiresAt = now.plus(VERIFIED_VALIDITY);
 
         return true;
+    }
+
+    public void consume(PhoneNumber requestedPhoneNumber, VerificationPurpose requestedPurpose, Instant now) {
+        if (status == VerificationStatus.CONSUMED) {
+            throw new BusinessException(VerificationErrorCode.ALREADY_CONSUMED);
+        }
+
+        if (status != VerificationStatus.VERIFIED) {
+            throw new BusinessException(VerificationErrorCode.NOT_VERIFIED);
+        }
+
+        if (!now.isBefore(expiresAt)) {
+            throw new BusinessException(VerificationErrorCode.VERIFICATION_EXPIRED);
+        }
+
+        if (!phoneNumber.equals(requestedPhoneNumber) || purpose != requestedPurpose) {
+            throw new BusinessException(VerificationErrorCode.VERIFICATION_MISMATCH);
+        }
+
+        status = VerificationStatus.CONSUMED;
     }
 }

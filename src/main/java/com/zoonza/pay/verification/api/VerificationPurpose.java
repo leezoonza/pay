@@ -1,4 +1,4 @@
-package com.zoonza.pay.verification.internal.domain;
+package com.zoonza.pay.verification.api;
 
 public enum VerificationPurpose {
     SIGNUP,
